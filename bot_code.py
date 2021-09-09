@@ -27,9 +27,8 @@ class MyClient(discord.Client):
         # when a new issue is posted.
         self.ROIs = ["waste_watcher","zbceblog","zbce_api"]
 
-        ## TODO: uncommment
-        # # start the task to run in the background
-        # self.check_issues.start()
+        # start the task to run in the background
+        self.check_issues.start()
 
     async def on_ready(self):
         print('Logged in as')
@@ -64,7 +63,7 @@ class MyClient(discord.Client):
             with open('./templates/issue.txt') as f:
                 mark_str = f.read().format(r.json()[i]["title"], r.json()[i]["url"])
                 mark_list.append(mark_str)
-        
+
         if len(mark_list) > 0:
             heading = "__📚 **{}** Github Issues__\n".format(repo)
             return heading + "".join(mark_list)
