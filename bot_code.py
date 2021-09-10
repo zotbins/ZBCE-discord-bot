@@ -28,7 +28,7 @@ class MyClient(discord.Client):
         # hard-coded repos of interests (ROI)
         # These are repos that we are interested in for following
         # when a new issue is posted.
-        self.ROIs = ["waste_watcher", "zbceblog", "zbce_api"]
+        self.ROIs = ["waste_watcher", "zbceblog", "zbce_api", "ZBCE-discord-bot"]
 
         # start the task to run in the background
         self.check_issues.start()
