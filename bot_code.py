@@ -9,7 +9,7 @@ Ideas:
 - Integrate with a project board (task list). React when done/finished/you_want_the_task
 """
 
-# ALl imports
+# All imports
 import requests
 from datetime import datetime
 import os
@@ -20,10 +20,27 @@ from dotenv import load_dotenv
 
 DIRNAME = os.path.dirname(__file__)
 
+import sys
+
+sys.path.insert(1, os.path.join(DIRNAME, "scripts"))
+
+import query_zbce_api as zbce_api
+from tabulate import tabulate
+
 
 class MyClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # load secrets from the .env file
+        dotenv_path = Path(os.path.join(DIRNAME, ".env"))
+        load_dotenv(dotenv_path=dotenv_path)
+
+        # class variables from .env file
+        self.discord_token = os.getenv("DISCORD_TOKEN")
+        self.api_key = os.getenv("API_KEY")
+        self.api_url = os.getenv("API_URL")
+        self.issues_channel = os.getenv("ISSUES_CHANNEL")
 
         # hard-coded repos of interests (ROI)
         # These are repos that we are interested in for following
@@ -41,7 +58,7 @@ class MyClient(discord.Client):
 
     @tasks.loop(seconds=3600 * 24)  # task runs every 60 seconds
     async def check_issues(self):
-        channel = self.get_channel(773326709797027850)  # channel ID goes here
+        channel = self.get_channel(self.issues_channel)  # channel ID goes here
         for repo in self.ROIs:
             s = self.git_open_issues(repo)
             if s:
@@ -79,6 +96,29 @@ class MyClient(discord.Client):
         else:
             return None
 
+    def get_daily_fullness(self):
+        qClass = zbce_api.QueryZBCEAPI(self.api_url, self.api_key)
+
+        # try twice. sometimes the server maybe unreliable,
+        # so we need to try to send the request again. If it doesn't
+        # work then we just have an empty list.
+        for i in range(2):
+            bin_id_lst = qClass.get_available_bins()
+
+            if bin_id_lst:
+                break
+
+        if bin_id_lst:
+            tabular_data = []
+            for id in bin_id_lst:
+                r = qClass.get_fullness_today(1)
+                if r:
+                    row = r["data"][-1]
+                    tabular_data.append([row["bin_id"], row["fullness"]])
+
+            tabular_data.sort(key=lambda l: l[-1])
+            return tabulate(tabular_data, headers=["bin_id", "fullness"])
+
     async def on_message(self, message):
         if message.author == client.user:
             return
@@ -90,7 +130,7 @@ class MyClient(discord.Client):
         elif message.content.startswith("/hello"):
             await message.channel.send("👋 Hello!")
 
-        elif message.content.startswith("/new_issues"):
+        elif message.content.startswith("/new-issues"):
             for repo in self.ROIs:
                 s = self.git_open_issues(repo)
                 if s:
@@ -102,11 +142,11 @@ class MyClient(discord.Client):
                     await message.channel.send(
                         "No new issues for **{}** today 🌱".format(repo)
                     )
+        elif message.content.startswith("/daily-fullness"):
+            await message.channel.send(self.get_daily_fullness())
 
 
 if __name__ == "__main__":
-    load_dotenv()
-    TOKEN = os.getenv("DISCORD_TOKEN")
-
+    # start the discord bot client
     client = MyClient()
-    client.run(TOKEN)
+    client.run(client.discord_token)
