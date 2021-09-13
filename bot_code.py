@@ -116,7 +116,7 @@ class MyClient(discord.Client):
                     row = r["data"][-1]
                     tabular_data.append([row["bin_id"], row["fullness"]])
 
-            tabular_data.sort(key=lambda l: l[-1])
+            tabular_data.sort(key=lambda l: l[-1], reverse=True)
             return tabulate(tabular_data, headers=["bin_id", "fullness"])
 
     async def on_message(self, message):
