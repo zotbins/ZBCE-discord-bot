@@ -1,4 +1,5 @@
 List of Commands:
 - /help: Shows all the available bot commands. 
 - /hello: Says hello. 
-- /new_issues: checks all the ZBCE repos for new issues today
+- /new-issues: checks all the ZBCE repos for new issues today
+- /daily-fullness: returns a leaderboard fo which bins are the least full today
